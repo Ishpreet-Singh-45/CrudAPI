@@ -30,10 +30,25 @@ class Items extends ResourceController
      * 
      * @request : GET
      */
-    public function index()
+    public function index($id = null)
     {
-        $data = $this -> model -> findAll();
-        return $this -> respond($data);
+        if($id == null)
+        {
+            $data = $this -> model -> findAll();
+            return $this -> respond($data);
+        }else
+        {
+            $data = $this -> model -> getWhere(['id' => $id]) -> getResult();
+
+            if($data)
+            {
+                return $this -> respond($data);
+            }else
+            {
+                return ($this -> failNotFound("No data found for specified Id : {$id}"));
+            }
+        }
+        
     }
 
 
@@ -46,15 +61,7 @@ class Items extends ResourceController
      */
     public function show($id = null)
     {
-        $data = $this -> model -> getWhere(['id' => $id]) -> getResult();
-
-        if($data)
-        {
-            return $this -> respond($data);
-        }else
-        {
-            return ($this -> failNotFound("No data found for specified Id : {$id}"));
-        }
+        
     }
 
 
@@ -72,16 +79,26 @@ class Items extends ResourceController
             'Price' => $this -> request -> getVar('product_price')
         ];
 
-        $this -> model -> insert($data); // insert
-
-        $response = [
-            'status' => 200,
-            'error' => null,
-            'messages' => [
-                'success' => 'Data Saved'
-            ]
-        ];
-
+       if($this -> model -> insert($data)) // insert
+       {
+           $response = [
+                'status' => 200,
+                'error' => null,
+                'messages' => [
+                    'success' => 'Data Saved'
+                ]
+            ];
+       }else
+       {
+           $response = [
+               'status' => 500,
+               'error' => 'Runtime Error',
+               'messages' => [
+                   'server' => "Internal Server Error",
+                   'message' => "Could not be inserted. Invalid data"
+               ]
+           ];
+       }
 
         return $this -> respondCreated($response);
 
@@ -105,7 +122,7 @@ class Items extends ResourceController
         $this -> model -> update($id, $data);
 
         $response = [
-            'status' => 200, 
+            'status' => 200,
             'error' => 'null',
             'messages' => [
                 'success' => 'Data Updated'
